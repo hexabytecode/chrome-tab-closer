@@ -1,36 +1,27 @@
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("Auto Close Tab extension installed");
+  chrome.storage.sync.set({ timers: {} });
+  chrome.action.setBadgeBackgroundColor({ color: "#FF0000" });
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name.startsWith("closeTab")) {
-    const tabId = parseInt(alarm.name.split("-")[1], 10);
-    chrome.tabs.remove(tabId, () => {
+  const [type, id] = alarm.name.split("-");
+
+  if (type === "closeTab") {
+    chrome.tabs.remove(parseInt(id, 10), () => {
       notifyTabClose();
+      clearBadgeText();
+      removeTimer(alarm.name);
     });
-  } else if (alarm.name === "closeWindow") {
+  } else if (type === "closeWindow") {
     chrome.windows.getCurrent((window) => {
       chrome.windows.remove(window.id);
+      clearBadgeText();
+      removeTimer(alarm.name);
     });
-  } else if (alarm.name.startsWith("minimizeWindow")) {
-    chrome.windows.update(parseInt(alarm.name.split("-")[1], 10), {
-      state: "minimized",
-    });
-  }
-});
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name.startsWith("updateBadge")) {
-    const [_, type, endTime] = alarm.name.split("-");
-    const remainingTime = Math.max(0, parseInt(endTime, 10) - Date.now());
-    if (remainingTime > 0) {
-      chrome.action.setBadgeText({
-        text: `${Math.ceil(remainingTime / 60000)}`,
-      });
-      chrome.alarms.create(alarm.name, { when: Date.now() + 60000 });
-    } else {
-      chrome.action.setBadgeText({ text: "" });
-    }
+  } else if (type === "updateBadge") {
+    updateBadgeText(alarm.name, id);
+  } else if (type === "minimizeWindow") {
+    chrome.windows.update(parseInt(id, 10), { state: "minimized" });
   }
 });
 
@@ -56,5 +47,28 @@ function notifyTabClose() {
         }
       );
     }
+  });
+}
+
+function updateBadgeText(alarmName, endTime) {
+  const remainingTime = Math.max(0, parseInt(endTime, 10) - Date.now());
+  if (remainingTime > 0) {
+    const minutes = Math.ceil(remainingTime / 60000);
+    chrome.action.setBadgeText({ text: `${minutes}` });
+    chrome.alarms.create(alarmName, { when: Date.now() + 60000 });
+  } else {
+    chrome.action.setBadgeText({ text: "" });
+  }
+}
+
+function clearBadgeText() {
+  chrome.action.setBadgeText({ text: "" });
+}
+
+function removeTimer(alarmName) {
+  chrome.storage.sync.get(["timers"], (result) => {
+    const timers = result.timers || {};
+    delete timers[alarmName];
+    chrome.storage.sync.set({ timers });
   });
 }

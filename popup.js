@@ -1,4 +1,15 @@
-document.getElementById("close-tab").addEventListener("click", () => {
+document.addEventListener("DOMContentLoaded", () => {
+  chrome.storage.sync.get(["timers"], (result) => {
+    const timers = result.timers || {};
+    const alarmNames = Object.keys(timers);
+    if (alarmNames.length > 0) {
+      const [alarmName, endTime] = alarmNames[0].split("-");
+      updateTimerDisplay(parseInt(endTime, 10));
+    }
+  });
+});
+
+document.getElementById("start-timer").addEventListener("click", () => {
   const time = parseInt(document.getElementById("time").value, 10);
   if (isNaN(time) || time <= 0) {
     alert("Please enter a valid time in minutes");
@@ -13,31 +24,30 @@ document.getElementById("close-tab").addEventListener("click", () => {
     chrome.alarms.create(`minimizeWindow-${tabId}`, {
       when: Date.now() + 5000,
     });
-    chrome.alarms.create(`updateBadge-closeTab-${endTime}`, {
+    chrome.alarms.create(`updateBadge-${endTime}`, {
       when: Date.now() + 60000,
     });
 
     updateTimerDisplay(endTime);
+    storeTimer(alarmName, endTime);
     alert(`Tab will be closed in ${time} minutes.`);
   });
 });
 
-document.getElementById("close-window").addEventListener("click", () => {
-  const time = parseInt(document.getElementById("time").value, 10);
-  if (isNaN(time) || time <= 0) {
-    alert("Please enter a valid time in minutes");
-    return;
-  }
-
-  const endTime = Date.now() + time * 60000;
-  chrome.alarms.create("closeWindow", { when: endTime });
-  chrome.alarms.create("minimizeWindow-window", { when: Date.now() + 5000 });
-  chrome.alarms.create(`updateBadge-closeWindow-${endTime}`, {
-    when: Date.now() + 60000,
+document.getElementById("stop-timer").addEventListener("click", () => {
+  chrome.alarms.clearAll(() => {
+    clearBadgeText();
+    removeAllTimers();
+    alert("Timer stopped.");
   });
+});
 
-  updateTimerDisplay(endTime);
-  alert(`Window will be closed in ${time} minutes.`);
+document.getElementById("cancel-timer").addEventListener("click", () => {
+  chrome.alarms.clearAll(() => {
+    clearBadgeText();
+    removeAllTimers();
+    alert("Timer cancelled.");
+  });
 });
 
 function updateTimerDisplay(endTime) {
@@ -56,4 +66,20 @@ function updateTimerDisplay(endTime) {
     }
   }
   update();
+}
+
+function storeTimer(alarmName, endTime) {
+  chrome.storage.sync.get(["timers"], (result) => {
+    const timers = result.timers || {};
+    timers[alarmName] = endTime;
+    chrome.storage.sync.set({ timers });
+  });
+}
+
+function removeAllTimers() {
+  chrome.storage.sync.set({ timers: {} });
+}
+
+function clearBadgeText() {
+  chrome.action.setBadgeText({ text: "" });
 }
