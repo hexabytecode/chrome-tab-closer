@@ -5,15 +5,35 @@
     <style>
       body {
         font-family: Arial, sans-serif;
-        width: 200px;
+        width: 250px;
+        padding: 20px;
+        background: #f1f1f1;
+      }
+      input,
+      button {
+        width: calc(100% - 20px);
+        margin: 10px 10px 10px 0;
         padding: 10px;
+        border: none;
+        border-radius: 5px;
       }
       input {
-        width: 100%;
-        margin: 5px 0;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       }
       button {
-        width: 100%;
+        background: #007bff;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+      button:hover {
+        background: #0056b3;
+      }
+      .timer {
+        text-align: center;
+        font-size: 1.5em;
+        margin: 10px 0;
       }
     </style>
   </head>
@@ -28,6 +48,7 @@
     />
     <button id="close-tab">Close Tab</button>
     <button id="close-window">Close Window</button>
+    <div class="timer" id="timer"></div>
     <script src="popup.js"></script>
   </body>
 </html>

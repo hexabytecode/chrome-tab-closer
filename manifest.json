@@ -1,9 +1,16 @@
 {
   "manifest_version": 3,
   "name": "Auto Close Tab",
-  "version": "1.0",
+  "version": "1.1",
   "description": "Close a specific tab or the whole Chrome window at a specified time.",
-  "permissions": ["tabs", "activeTab", "background", "alarms"],
+  "permissions": [
+    "tabs",
+    "activeTab",
+    "background",
+    "alarms",
+    "notifications",
+    "storage"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": {
